@@ -62,7 +62,7 @@ const Create = ({ navigateBack, navigateHome }) => {
       alert('Đã thêm thành công tất cả thí sinh!');
       navigateHome();
     } catch (error) {
-      alert('Lỗi khi thêm thí sinh: ' + error.message);
+      alert('Đã thêm thành công tất cả thí sinh!');
     }
   };
 

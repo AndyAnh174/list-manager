@@ -12,10 +12,18 @@ const History = ({ navigateBack, navigateHome }) => {
   const loadHistory = async () => {
     try {
       const data = await studentApi.getHistory();
-      setHistory(data);
+      setHistory(sortHistory(data));
     } catch (error) {
       setError('Lỗi khi tải lịch sử: ' + error.message);
     }
+  };
+
+  const sortHistory = (historyData) => {
+    return [...historyData].sort((a, b) => {
+      const timeA = new Date(a.time);
+      const timeB = new Date(b.time);
+      return timeB - timeA;
+    });
   };
 
   const formatTime = (timeStr) => {
@@ -85,8 +93,10 @@ const History = ({ navigateBack, navigateHome }) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa mục lịch sử này?')) {
       try {
         await studentApi.clearHistoryItem(index);
-        // Cập nhật state sau khi xóa
-        setHistory(prevHistory => prevHistory.filter((_, i) => i !== index));
+        setHistory(prevHistory => {
+          const newHistory = prevHistory.filter((_, i) => i !== index);
+          return sortHistory(newHistory);
+        });
       } catch (error) {
         setError('Lỗi khi xóa mục lịch sử: ' + error.message);
       }

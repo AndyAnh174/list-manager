@@ -12,11 +12,14 @@ const Update = ({ navigateBack, navigateHome }) => {
   const handleSearch = async () => {
     try {
       setError(null);
+      
+      if (!query.SBD || !query.Year) {
+        setError('Vui lòng nhập đầy đủ Số Báo Danh và Năm thi');
+        return;
+      }
+
       const data = await studentApi.getStudent(query.SBD);
-      // Lọc theo năm nếu có
-      const filteredData = query.Year 
-        ? data.filter(student => student['Năm'].toString() === query.Year)
-        : data;
+      const filteredData = data.filter(student => student['Năm'].toString() === query.Year);
       
       if (filteredData.length > 0) {
         setStudentData(filteredData[0]);
@@ -43,7 +46,6 @@ const Update = ({ navigateBack, navigateHome }) => {
         return;
       }
 
-      // Tìm các trường đã thay đổi
       const changes = {};
       Object.keys(updatedData).forEach(key => {
         if (['Toán', 'Văn', 'Lý', 'Hóa', 'Sinh', 'Ngoại ngữ', 'Lịch sử', 'Địa lý', 'GDCD'].includes(key)) {
@@ -78,21 +80,23 @@ const Update = ({ navigateBack, navigateHome }) => {
           {!studentData && (
             <div className="w-full max-w-md">
               <div className="mb-4">
-                <label className="block mb-2">Số Báo Danh:</label>
+                <label className="block mb-2">Số Báo Danh: <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={query.SBD}
                   onChange={(e) => setQuery({ ...query, SBD: e.target.value })}
                   className="w-full p-2 border rounded"
+                  required
                 />
               </div>
               <div className="mb-4">
-                <label className="block mb-2">Năm:</label>
+                <label className="block mb-2">Năm: <span className="text-red-500">*</span></label>
                 <input
                   type="text"
                   value={query.Year}
                   onChange={(e) => setQuery({ ...query, Year: e.target.value })}
                   className="w-full p-2 border rounded"
+                  required
                 />
               </div>
               <button
