@@ -8,17 +8,28 @@ const History = ({ navigateBack, navigateHome }) => {
   const loadHistory = useCallback(async () => {
     try {
       const data = await studentApi.getHistory();
-      const validData = data.filter(record => {
+      const validData = data.map(record => {
         try {
-          if (typeof record.data === 'string') {
-            JSON.parse(record.data);
+          if (record.data && typeof record.data === 'string') {
+            try {
+              const parsedData = JSON.parse(
+                record.data.replace(/:\s*NaN/g, ':null')
+              );
+              return {
+                ...record,
+                data: parsedData
+              };
+            } catch (e) {
+              return record;
+            }
           }
-          return true;
+          return record;
         } catch (e) {
           console.log('Bỏ qua bản ghi không hợp lệ:', e);
-          return false;
+          return null;
         }
-      });
+      }).filter(record => record !== null);
+
       setHistory(sortHistory(validData));
     } catch (error) {
       setError('Lỗi khi tải lịch sử: ' + error.message);
@@ -61,13 +72,13 @@ const History = ({ navigateBack, navigateHome }) => {
           if (record.data) {
             const sbd = record.data.SBD || 'N/A';
             const year = record.data.Year || 'N/A';
-            return `Thêm thí sinh SBD: ${sbd === 'NaN' ? 'N/A' : sbd}, Năm: ${year === 'NaN' ? 'N/A' : year}`;
+            return `Thêm thí sinh SBD: ${sbd === 'NaN' || sbd === null ? 'N/A' : sbd}, Năm: ${year === 'NaN' || year === null ? 'N/A' : year}`;
           }
           return 'Thêm thí sinh mới';
 
         case 'READ':
           if (record.sbd) {
-            return `Xem thí sinh SBD: ${record.sbd === 'NaN' ? 'N/A' : record.sbd}`;
+            return `Xem thí sinh SBD: ${record.sbd === 'NaN' || record.sbd === null ? 'N/A' : record.sbd}`;
           }
           return 'Xem thí sinh';
 
@@ -78,7 +89,7 @@ const History = ({ navigateBack, navigateHome }) => {
             
             if (typeof record.data === 'string') {
               try {
-                const parsedData = JSON.parse(record.data);
+                const parsedData = JSON.parse(record.data.replace(/:\s*NaN/g, ':null'));
                 sbd = parsedData.SBD || parsedData.old?.SBD || 'N/A';
                 year = parsedData.Year || parsedData.old?.Year || 'N/A';
               } catch (e) {
@@ -89,7 +100,7 @@ const History = ({ navigateBack, navigateHome }) => {
               year = record.data.Year || record.data.old?.Year || 'N/A';
             }
             
-            return `Cập nhật thí sinh SBD: ${sbd === 'NaN' ? 'N/A' : sbd}, Năm: ${year === 'NaN' ? 'N/A' : year}`;
+            return `Cập nhật thí sinh SBD: ${sbd === 'NaN' || sbd === null ? 'N/A' : sbd}, Năm: ${year === 'NaN' || year === null ? 'N/A' : year}`;
           }
           return 'Cập nhật thí sinh';
 
