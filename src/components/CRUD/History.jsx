@@ -1,22 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { studentApi } from '../../api/student';
 
 const History = ({ navigateBack, navigateHome }) => {
   const [history, setHistory] = useState([]);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    loadHistory();
-  }, []);
-
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     try {
       const data = await studentApi.getHistory();
-      setHistory(sortHistory(data));
+      const validData = data.filter(record => {
+        try {
+          if (typeof record.data === 'string') {
+            JSON.parse(record.data);
+          }
+          return true;
+        } catch (e) {
+          console.log('Bỏ qua bản ghi không hợp lệ:', e);
+          return false;
+        }
+      });
+      setHistory(sortHistory(validData));
     } catch (error) {
       setError('Lỗi khi tải lịch sử: ' + error.message);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
 
   const sortHistory = (historyData) => {
     return [...historyData].sort((a, b) => {
@@ -44,36 +55,67 @@ const History = ({ navigateBack, navigateHome }) => {
   const formatDetails = (record) => {
     if (!record || !record.operation) return 'Không có thông tin chi tiết';
 
-    switch (record.operation) {
+    try {
+      switch (record.operation) {
         case 'CREATE':
-            if (record.data) {
-                return `Thêm thí sinh SBD: ${record.data.SBD || 'N/A'}, Năm: ${record.data.Year || 'N/A'}`;
-            }
-            return 'Thêm thí sinh mới';
-            
+          if (record.data) {
+            const sbd = record.data.SBD || 'N/A';
+            const year = record.data.Year || 'N/A';
+            return `Thêm thí sinh SBD: ${sbd === 'NaN' ? 'N/A' : sbd}, Năm: ${year === 'NaN' ? 'N/A' : year}`;
+          }
+          return 'Thêm thí sinh mới';
+
         case 'READ':
-            if (record.sbd) {
-                return `Xem thí sinh SBD: ${record.sbd}`;
-            }
-            return 'Xem thí sinh';
-            
+          if (record.sbd) {
+            return `Xem thí sinh SBD: ${record.sbd === 'NaN' ? 'N/A' : record.sbd}`;
+          }
+          return 'Xem thí sinh';
+
         case 'UPDATE':
-            if (record.data) {
-                return `Cập nhật thí sinh SBD: ${record.data.SBD || record.data.old?.SBD || 'N/A'}, Năm: ${record.data.Year || record.data.old?.Year || 'N/A'}`;
-            }
-            return 'Cập nhật thí sinh';
+          if (record.data) {
+            let sbd = 'N/A';
+            let year = 'N/A';
             
+            if (typeof record.data === 'string') {
+              try {
+                const parsedData = JSON.parse(record.data);
+                sbd = parsedData.SBD || parsedData.old?.SBD || 'N/A';
+                year = parsedData.Year || parsedData.old?.Year || 'N/A';
+              } catch (e) {
+                console.log('Không thể parse data:', e);
+              }
+            } else {
+              sbd = record.data.SBD || record.data.old?.SBD || 'N/A';
+              year = record.data.Year || record.data.old?.Year || 'N/A';
+            }
+            
+            return `Cập nhật thí sinh SBD: ${sbd === 'NaN' ? 'N/A' : sbd}, Năm: ${year === 'NaN' ? 'N/A' : year}`;
+          }
+          return 'Cập nhật thí sinh';
+
         case 'DELETE':
-            if (record.data) {
-                return `Xóa thí sinh SBD: ${record.data.SBD || 'N/A'}, Năm: ${record.data.Year || 'N/A'}`;
-            }
-            return 'Xóa thí sinh';
-            
+          if (record.data) {
+            const sbd = record.data.SBD || 'N/A';
+            const year = record.data.Year || 'N/A';
+            return `Xóa thí sinh SBD: ${sbd === 'NaN' ? 'N/A' : sbd}, Năm: ${year === 'NaN' ? 'N/A' : year}`;
+          }
+          return 'Xóa thí sinh';
+
         case 'FINISH':
-            return 'Đã tạo file Updated_Data.csv';
-            
+          return 'Đã tạo file Updated_Data.csv';
+
+        case 'CLEAN':
+          if (record.data && record.data.choice) {
+            return `Làm sạch dữ liệu từ: ${record.data.choice}`;
+          }
+          return 'Làm sạch dữ liệu';
+
         default:
-            return 'Không có thông tin chi tiết';
+          return 'Không có thông tin chi tiết';
+      }
+    } catch (error) {
+      console.error('Lỗi khi format chi tiết:', error);
+      return 'Không thể hiển thị chi tiết';
     }
   };
 

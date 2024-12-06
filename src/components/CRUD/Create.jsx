@@ -23,11 +23,30 @@ const Create = ({ navigateBack, navigateHome }) => {
     MaTinh: "",
   });
 
+  const validateScore = (value) => {
+    if (value === "") return true; // Cho phép để trống
+    const score = parseFloat(value);
+    return !isNaN(score) && score >= 0 && score <= 10;
+  };
+
   const handleFieldChange = (field, value) => {
-    setCurrentInput((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    const scoreFields = ['Toán', 'Văn', 'Lý', 'Hóa', 'Sinh', 'Ngoại ngữ', 'Lịch sử', 'Địa lý', 'GDCD'];
+    
+    if (scoreFields.includes(field)) {
+      if (value === "" || validateScore(value)) {
+        setCurrentInput(prev => ({
+          ...prev,
+          [field]: value
+        }));
+      } else {
+        alert('Điểm phải từ 0 đến 10');
+      }
+    } else {
+      setCurrentInput(prev => ({
+        ...prev,
+        [field]: value
+      }));
+    }
   };
 
   const handleNext = () => {
@@ -107,10 +126,13 @@ const Create = ({ navigateBack, navigateHome }) => {
                         {field}:
                       </label>
                       <input
-                        type="text"
+                        type={['Toán', 'Văn', 'Lý', 'Hóa', 'Sinh', 'Ngoại ngữ', 'Lịch sử', 'Địa lý', 'GDCD'].includes(field) ? "number" : "text"}
                         value={currentInput[field]}
                         onChange={(e) => handleFieldChange(field, e.target.value)}
                         className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-300 transition-all"
+                        min={['Toán', 'Văn', 'Lý', 'Hóa', 'Sinh', 'Ngoại ngữ', 'Lịch sử', 'Địa lý', 'GDCD'].includes(field) ? "0" : undefined}
+                        max={['Toán', 'Văn', 'Lý', 'Hóa', 'Sinh', 'Ngoại ngữ', 'Lịch sử', 'Địa lý', 'GDCD'].includes(field) ? "10" : undefined}
+                        step={['Toán', 'Văn', 'Lý', 'Hóa', 'Sinh', 'Ngoại ngữ', 'Lịch sử', 'Địa lý', 'GDCD'].includes(field) ? "0.01" : undefined}
                       />
                     </div>
                   ))}
